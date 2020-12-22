@@ -3,7 +3,8 @@ import defaultDetaset from './dataset.js'
 import './assets/styles/style.css'
 import {
   AnswersList,
-  Chats
+  Chats,
+  FormDialog
 } from './components/index'
 
 export default class App extends React.Component {
@@ -16,7 +17,8 @@ export default class App extends React.Component {
       dataset: defaultDetaset,
       open: false
     } 
-    this.selectAnswer = this.selectAnswer.bind()
+    this.handleClickToogle = this.handleClickToogle.bind(this)
+    this.selectAnswer = this.selectAnswer.bind(this)
   }
 
   displayNextQuestion = (nextQuestionId)=>{
@@ -37,6 +39,10 @@ export default class App extends React.Component {
     switch(true){
       case(nextQuestionId === 'init'):
         setTimeout(()=>{this.displayNextQuestion(nextQuestionId)},500)
+        break;
+      case(nextQuestionId === 'contact'):
+        this.handleClickToogle()
+        this.displayNextQuestion('init')
         break;
       case(/^https:*/.test(nextQuestionId)):
         const a = document.createElement('a')
@@ -61,6 +67,12 @@ export default class App extends React.Component {
     }
   }
 
+  handleClickToogle = () => {
+    this.setState({
+        open: !this.state.open
+    })
+};  
+
   componentDidMount(){
     const initAnswer = ""
     this.selectAnswer(initAnswer, this.state.currentId)
@@ -79,6 +91,7 @@ export default class App extends React.Component {
         <div className="c-box">
           <Chats chats={this.state.chats}/>
           <AnswersList answers={this.state.answers} select={this.selectAnswer}/>
+          <FormDialog open={this.state.open} handleClickToogle={this.handleClickToogle}/>
         </div>
       </section>
     );
