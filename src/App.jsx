@@ -1,4 +1,4 @@
-import React from 'react'
+import React,{useState, useCallback, useEffect} from 'react'
 import './assets/styles/style.css'
 import {
   AnswersList,
@@ -7,43 +7,35 @@ import {
 } from './components/index'
 import {db} from './firebase/index'
 
-export default class App extends React.Component {
-  constructor(props){
-    super(props)
-    this.state = {
-      answers: [],
-      chats: [],
-      currentId: 'init',
-      dataset: {},
-      open: false
-    } 
-    this.handleClickToogle = this.handleClickToogle.bind(this)
-    this.selectAnswer = this.selectAnswer.bind(this)
-  }
-
-  displayNextQuestion = (nextQuestionId)=>{
-    const chats = this.state.chats
-    chats.push({
-      text: this.state.dataset[nextQuestionId].question,
-      type:'question'
+const  App = ()=>{
+  
+  const [answers,setAnswers] = useState([])
+  const [chats, setChats] = useState([])
+  const [currentId, setCurrentId] = useState('init')
+  const [dataset, setDataset] = useState({})
+  const [open, setOpen] = useState(false)
+  
+  const addChats = useCallback((chat)=>{
+    setChats(prevChats=>{
+      return[...prevChats,chat]
+    })
+  },[setChats])
+  
+  const displayNextQuestion = (nextQuestionId, nextDataset)=>{
+    addChats({
+      text: nextDataset.question,
+      type:'question'      
     })
 
-    this.setState({
-      answers: this.state.dataset[nextQuestionId].answers,
-      chats: chats,
-      currentId:nextQuestionId
-    })    
+    setAnswers(nextDataset.answers)
+    setCurrentId(nextQuestionId)
   }
 
-  selectAnswer = (selectedAnswer, nextQuestionId)=>{
+  const selectAnswer = (selectedAnswer, nextQuestionId)=>{
     switch(true){
-      case(nextQuestionId === 'init'):
-        setTimeout(()=>{this.displayNextQuestion(nextQuestionId)},500)
-        break;
-
       case(nextQuestionId === 'contact'):
-        this.handleClickToogle()
-        this.displayNextQuestion('init')
+        handleClickToogle()
+        displayNextQuestion('init',dataset['init'])
         break;
 
       case(/^https:*/.test(nextQuestionId)):
@@ -54,68 +46,55 @@ export default class App extends React.Component {
         break;
 
       default:    
-        const chats = this.state.chats
-        
-        chats.push({
-          text:selectedAnswer,
-          type:'answer'
-        }) 
-
-        this.setState({
-          chats: chats
+        addChats({
+          text: selectedAnswer,
+          type: 'answer'
         })
 
-        setTimeout(()=>{this.displayNextQuestion(nextQuestionId)},1000)
+        setTimeout(()=>{displayNextQuestion(nextQuestionId,dataset[nextQuestionId])},750)
         break;
     }
   }
 
-  handleClickToogle = () => {
-    this.setState({
-        open: !this.state.open
-    })
-};  
 
-  initDataset = (dataset)=>{
-    this.setState({
-      dataset: dataset
-    })
+  const handleClickToogle = ()=>{
+    setOpen(!open)
+    console.log(open)
   }
 
-  componentDidMount(){
+  useEffect(()=>{
     (async()=>{
-      const dataset = this.state.dataset
+      const initDataset = {}
+
       await db.collection('questions').get().then(snapshots =>{
         snapshots.forEach(doc=>{
           const id = doc.id
           const data = doc.data()
-          dataset[id] = data
+          initDataset[id] = data
         })
       })
-      this.initDataset(dataset)
-      const initAnswer = ""
-      this.selectAnswer(initAnswer, this.state.currentId)
+      
+      setDataset(initDataset)
+      displayNextQuestion(currentId, initDataset[currentId])
     })()
-  }
+  },[])
 
-  componentDidUpdate(){
+  useEffect(()=>{
     const scrollArea = document.getElementById('scroll-area')
     if(scrollArea){
       scrollArea.scrollTop = scrollArea.scrollHeight
     }
-  }
+  })
 
-  render(){
-    return (
-      <section className="c-section">
-        <div className="c-box">
-          <Chats chats={this.state.chats}/>
-          <AnswersList answers={this.state.answers} select={this.selectAnswer}/>
-          <FormDialog open={this.state.open} handleClickToogle={this.handleClickToogle}/>
-        </div>
-      </section>
-    );
-  }
+  return (
+    <section className="c-section">
+      <div className="c-box">
+        <Chats chats={chats}/>
+        <AnswersList answers={answers} select={selectAnswer}/>
+        <FormDialog open={open} handleClickToogle={handleClickToogle}/>
+      </div>
+    </section>
+  );
 }
 
-
+export default App

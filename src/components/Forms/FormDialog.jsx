@@ -3,7 +3,6 @@ import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 import TextInput from './textInput'
@@ -11,7 +10,7 @@ import TextInput from './textInput'
 export default class FormDialog extends React.Component{
     constructor(props){
         super(props)
-
+        
         this.state={
             name: '',
             email: '',
@@ -44,6 +43,8 @@ export default class FormDialog extends React.Component{
         const email = this.state.email
         const description = this.state.description
 
+        console.log(this.props.open)
+
         const payload={
             text:`お問い合わせがありました\n`　+
                 `お名前:${name}\n`+
@@ -51,7 +52,7 @@ export default class FormDialog extends React.Component{
                 `お問い合わせ内容:\n${description}\n`   
         }
 
-        const url = 'https://hooks.slack.com/services/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'
+        const url = 'https://hooks.slack.com/services/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' //APIのURL貼り付け
 
         fetch(url,{
             method:'POST',
