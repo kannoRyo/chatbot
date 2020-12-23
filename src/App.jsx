@@ -1,11 +1,11 @@
 import React from 'react'
-import defaultDetaset from './dataset.js'
 import './assets/styles/style.css'
 import {
   AnswersList,
   Chats,
   FormDialog
 } from './components/index'
+import {db} from './firebase/index'
 
 export default class App extends React.Component {
   constructor(props){
@@ -14,7 +14,7 @@ export default class App extends React.Component {
       answers: [],
       chats: [],
       currentId: 'init',
-      dataset: defaultDetaset,
+      dataset: {},
       open: false
     } 
     this.handleClickToogle = this.handleClickToogle.bind(this)
@@ -40,16 +40,19 @@ export default class App extends React.Component {
       case(nextQuestionId === 'init'):
         setTimeout(()=>{this.displayNextQuestion(nextQuestionId)},500)
         break;
+
       case(nextQuestionId === 'contact'):
         this.handleClickToogle()
         this.displayNextQuestion('init')
         break;
+
       case(/^https:*/.test(nextQuestionId)):
         const a = document.createElement('a')
         a.href = nextQuestionId
         a.target = '_blank'
         a.click()
         break;
+
       default:    
         const chats = this.state.chats
         
@@ -73,9 +76,26 @@ export default class App extends React.Component {
     })
 };  
 
+  initDataset = (dataset)=>{
+    this.setState({
+      dataset: dataset
+    })
+  }
+
   componentDidMount(){
-    const initAnswer = ""
-    this.selectAnswer(initAnswer, this.state.currentId)
+    (async()=>{
+      const dataset = this.state.dataset
+      await db.collection('questions').get().then(snapshots =>{
+        snapshots.forEach(doc=>{
+          const id = doc.id
+          const data = doc.data()
+          dataset[id] = data
+        })
+      })
+      this.initDataset(dataset)
+      const initAnswer = ""
+      this.selectAnswer(initAnswer, this.state.currentId)
+    })()
   }
 
   componentDidUpdate(){
